@@ -1,5 +1,6 @@
 var express    = require('express'),
     bodyParser = require('body-parser'),
+    _          = require('underscore'),   // library of common util functions
     app        = express(),
     port       = process.env.PORT || 3000,
     todos      = [],
@@ -17,16 +18,14 @@ app.get('/todos', function (req, res) {
   res.json(todos);
 });
 
+
 // http request: GET -> /todos/:id
 app.get('/todos/:id', function (req, res) {
-  var todoId = parseInt(req.params.id, 10), // because req.params returns a string and we need a number
-    matchedTodo;
-  
-  todos.forEach(function (todo) {
-    if (todoId === todo.id) {
-      matchedTodo = todo;
-    }
-  });
+  var todoId = parseInt(req.params.id, 10); // because req.params returns a string and we need a number
+  // underscore's 'findWhere' method takes 2 params:
+  //   the array
+  //   the property & value we're looking for
+  var matchedTodo = _.findWhere(todos, {id: todoId});
   
   if (matchedTodo) {
     res.json(matchedTodo);
@@ -35,10 +34,27 @@ app.get('/todos/:id', function (req, res) {
   }
 });
 
+
 // http request: POST -> /todos
 app.post('/todos', function (req, res) {
-  // add & increment the ID
-  var body = req.body;     // returns an object from postman
+  // Underscore .pick method ignore extraneous properties passed to API
+  // Takes the input and the properties you want to KEEP.
+  var body = _.pick(req.body, 'description', 'completed');
+
+  // validate input using Underscore methods.
+  // Goal: fail if completed != boolean, body != string, or if
+  // description has no length.  We inclde the trim() method
+  // to ignore leading or trailing spaces.  So, this will fail if
+  // description is a bunch of spaces or an empty string.
+  if (!_.isBoolean(body.completed) ||
+      !_.isString(body.description) ||
+      body.description.trim().length === 0 ) {
+    return res.status(400).send();
+  }
+  
+  // set body.description to be trimmed value
+  body.description = body.description.trim();
+  
   body.id = todoNextId;    // adds id property to the object
   
   // push body into array
