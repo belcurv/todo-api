@@ -13,13 +13,15 @@ app.get('/', function (req, res) {
   
 });
 
-// http request: GET -> /todos
+// ================= GET -> /todos ==================
+// Gets all todos
 app.get('/todos', function (req, res) {
   res.json(todos);
 });
 
 
-// http request: GET -> /todos/:id
+// ================ GET -> /todos/:id ================
+// Gets a single todo based on ID
 app.get('/todos/:id', function (req, res) {
   var todoId = parseInt(req.params.id, 10); // because req.params returns a string and we need a number
   // underscore's 'findWhere' method takes 2 params:
@@ -35,7 +37,8 @@ app.get('/todos/:id', function (req, res) {
 });
 
 
-// http request: POST -> /todos
+// ================= POST -> /todos =================
+// Adds a todo
 app.post('/todos', function (req, res) {
   // Underscore .pick method ignore extraneous properties passed to API
   // Takes the input and the properties you want to KEEP.
@@ -65,13 +68,16 @@ app.post('/todos', function (req, res) {
   res.json(todos);
 });
 
-// DELETE /todos/:id
+
+// =============== DELETE -> /todos/:id ===============
+// Deletes a todo based on ID
 app.delete('/todos/:id', function (req, res) {
   var todoId = parseInt(req.params.id, 10);
   var matchedTodo = _.findWhere(todos, {id: todoId});
   if (!matchedTodo) {
     res.status(404).json({"error": "No todo found with that id"});
   } else {
+    // .without takes: 1 array and removes, argument, argument, etc.
     todos = _.without(todos, matchedTodo);
     // reply with all remaining todos
     res.json(todos);
@@ -79,6 +85,47 @@ app.delete('/todos/:id', function (req, res) {
 });
 
 
+
+// ================ PUT -> /todos/:id ================
+// Updates a todo based on ID
+app.put('/todos/:id', function (req, res) {
+  var body = _.pick(req.body, 'description', 'completed'),
+      validAttributes = {},
+      todoId = parseInt(req.params.id, 10),
+      matchedTodo = _.findWhere(todos, {id: todoId});
+  
+  if (!matchedTodo) {
+    return res.status(404).send(); // 'return' stops rest of code from running
+  }
+  
+  // check if 'completed' property exists and is a boolean
+  if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
+    validAttributes.completed = body.completed;
+  } else if (body.hasOwnProperty('completed')) {
+    return res.status(400).send();
+  }
+  
+  // check if 'description' exists, is a string, and length > 0
+  if (body.hasOwnProperty('description') &&
+     _.isString(body.description) && 
+     body.description.trim().length > 0) {
+    // set body.description to be trimmed value
+    validAttributes.description = body.description.trim();
+  } else if (body.hasOwnProperty('description')) {
+    return res.status(400).send();
+  }
+  
+  // if code gets this far, things went well and we can update the array
+  // we're going to use underscore method: .extend
+  // extend_.extend(destination, *sources)
+  matchedTodo = _.extend(matchedTodo, validAttributes);
+  res.json(todos);
+  
+  
+});
+
+
+// ================== START SERVER ===================
 app.listen(port, function () {
   console.log('Server listening on port ' + port);
 });
