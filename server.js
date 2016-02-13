@@ -15,8 +15,28 @@ app.get('/', function (req, res) {
 
 // ================= GET -> /todos ==================
 // Gets all todos
+// Filter if queryparam: GET /todos?completed=true
 app.get('/todos', function (req, res) {
-  res.json(todos);
+  var queryParams = req.query;     // returns an object!
+  var filteredTodos = todos;
+
+  // if has property && .completed === 'true'
+  if (queryParams.hasOwnProperty('completed')
+      && queryParams.completed === 'true') {
+    //  filteredTodos array = _.where(filteredTodos, filter object);
+    filteredTodos = _.where(filteredTodos, {"completed" : true} );
+    
+  }
+  
+  // else if (has Prop && .completed === false) {
+  else if (queryParams.hasOwnProperty('completed')
+           && queryParams.completed === 'false') {
+    //  filteredTodos array = _.where(filteredTodos, filter object);
+    filteredTodos = _.where(filteredTodos, {"completed" : false} );
+    
+  }
+
+  res.json(filteredTodos);
 });
 
 
