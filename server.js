@@ -4,7 +4,7 @@ var express    = require('express'),
     app        = express(),
     port       = process.env.PORT || 3000,
     todos      = [],
-    todoNextId = 1;   // not secure, we'll do this better later w/db
+    todoNextId = 1;            // not secure, we'll do this better later w/db
 
 app.use(bodyParser.json());
 
@@ -15,11 +15,13 @@ app.get('/', function (req, res) {
 
 // ================= GET -> /todos ==================
 // Gets all todos
-// Filter if queryparam: GET /todos?completed=true
+
+
 app.get('/todos', function (req, res) {
   var queryParams = req.query;     // returns an object!
   var filteredTodos = todos;
 
+  // Filter on /todos?completed=
   // if has property && .completed === 'true'
   if (queryParams.hasOwnProperty('completed')
       && queryParams.completed === 'true') {
@@ -33,6 +35,23 @@ app.get('/todos', function (req, res) {
            && queryParams.completed === 'false') {
     //  filteredTodos array = _.where(filteredTodos, filter object);
     filteredTodos = _.where(filteredTodos, {"completed" : false} );
+    
+  }
+  
+  
+  // Filter on /todos?q=
+  // if has property and length > 0
+  if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+    
+    // then set filteredTodos array equal to underscore's .filter method
+    // which adds items to an array if the callback returns true
+    filteredTodos = _.filter(filteredTodos, function (todo) {
+      // returns true if the todo's description contains the q param.
+      // set description and q to lowercase before checking to avoid
+      // case mismatches.
+      // if q exists, it's index will be zero or greater. So we compare to -1
+      return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
+    });
     
   }
 
