@@ -25,6 +25,7 @@ sequelize.sync({
 }).then(function () {
     console.log('Everything is synced');
     
+    // CHALLENGE
     // fetch todo item by id, then print to screen toJSON
     // else print Todo not found
     
@@ -37,6 +38,7 @@ sequelize.sync({
         }
     })
     
+    //  PRIOR COURSEWORK
     //    Todo.create({                       // add an item
     //        description: 'Take out trash'
     //    }).then(function(todo) {
