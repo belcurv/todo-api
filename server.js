@@ -57,14 +57,21 @@ app.get('/todos', function (req, res) {
 // ================ GET -> /todos/:id ================
 // Gets a single todo based on ID
 app.get('/todos/:id', function (req, res) {
-    var todoId = parseInt(req.params.id, 10), // req.params returns a string; we need number
-        matchedTodo = _.findWhere(todos, {id: todoId});
-
-    if (matchedTodo) {
-        res.json(matchedTodo);
-    } else {
-        res.status(404).send();
-    }
+    var todoId = parseInt(req.params.id, 10); // req.params returns a string; we need number
+    
+    db.todo.findById(todoId)
+    .then(function (todo) {
+        if (!!todo) {           // double !! converts object to its 'truthy' boolean
+            res.json(todo.toJSON());
+        } else {
+            res.status(404).send();
+        }
+        
+    }, function (err) {
+        res.status(500).send();
+    });
+    
+    
 });
 
 
@@ -81,23 +88,7 @@ app.post('/todos', function (req, res) {
         // error
         res.status(400).json(err);
     });
-  
 
-    // ===== THE OLD WAY, BEFORE WE HAD A DATABASE =====
-    //  if (!_.isBoolean(body.completed ) ||             // validate inputs
-    //      !_.isString(body.description) ||
-    //      body.description.trim().length === 0 ) {
-    //    return res.status(400).send();
-    //  }
-    //  
-    //  body.description = body.description.trim();      // trim inputs
-    //  
-    //  body.id = todoNextId;                            // add id#
-    //  todos.push(body);
-    //
-    //  todoNextId += 1;                                 // increment ID counter
-    //  
-    //  res.json(todos);                                 // return all todos
 });
 
 
