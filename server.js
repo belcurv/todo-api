@@ -17,40 +17,34 @@ app.get('/', function (req, res) {
 // ================= GET -> /todos ==================
 // Gets all todos
 app.get('/todos', function (req, res) {
-    var queryParams = req.query,     // returns an object!
-        filteredTodos = todos;
-
-    // Filter on /todos?completed=
-    // if has property && .completed === 'true'
-    if (queryParams.hasOwnProperty('completed')
-        && queryParams.completed === 'true') {
-        //  filteredTodos array = _.where(filteredTodos, filter object);
-        filteredTodos = _.where(filteredTodos, {"completed" : true});
-    }
-  
-    // else if (has Prop && .completed === false)
-    else if (queryParams.hasOwnProperty('completed')
-             && queryParams.completed === 'false') {
-        //  filteredTodos array = _.where(filteredTodos, filter object);
-        filteredTodos = _.where(filteredTodos, {"completed" : false});
-    }
-  
-    // Filter on /todos?q=
-    // if has property and length > 0
-    if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+    var query = req.query;     // returns an object!
+    var where = {};
     
-        // then set filteredTodos array equal to underscore's .filter method
-        // which adds items to an array if the callback returns true
-        filteredTodos = _.filter(filteredTodos, function (todo) {
-            // returns true if the todo's description contains the q param.
-            // set description and q to lowercase before checking to avoid
-            // case mismatches.
-            // if q exists, it's index will be zero or greater. So we compare to -1
-            return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
-        });
+    // if completed exists & true, set where.compelted to true
+    if (query.hasOwnProperty('completed') && query.completed === 'true') {
+        where.completed = true;
+    } else if (query.hasOwnProperty('completed') && query.completed === 'false') {
+        where.completed = false;
     }
+    
+    // if a URL query, & if query.length > zero.
+    if (query.hasOwnProperty('q') && query.q.length > 0) {
+        // filter on 'q'
+        where.description = {
+            $like: '%' + query.q + '%'
+        }
+    }
+    
+    // finally send the todos back res.json(todos)
+    db.todo.findAll({
+        where: where
+    })
+    .then(function(todos) {
+        res.json(todos);
+    }, function (err) {        // for error, send back 500 like before
+        res.status(500).send();
+    })
 
-    res.json(filteredTodos);
 });
 
 
