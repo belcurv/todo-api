@@ -55,7 +55,7 @@ app.get('/todos/:id', function (req, res) {
     
     db.todo.findById(todoId)
     .then(function (todo) {
-        if (!!todo) {           // double !! converts object to its 'truthy' boolean
+        if (!!todo) {                   // double !! converts object to its 'truthy' boolean
             res.json(todo.toJSON());
         } else {
             res.status(404).send();
@@ -64,7 +64,6 @@ app.get('/todos/:id', function (req, res) {
     }, function (err) {
         res.status(500).send();
     });
-    
     
 });
 
@@ -129,7 +128,7 @@ app.put('/todos/:id', function (req, res) {
         // set body.description to be trimmed value
         validAttributes.description = body.description.trim();
     } else if (body.hasOwnProperty('description')) {
-        return res.status(400).send();
+        return res.status(400).send(); 
     }
   
     // if code gets this far, things went well and we can update the array
@@ -146,5 +145,3 @@ db.sequelize.sync().then(function() {
         console.log('Server listening on port ' + port);
     });
 });
-
-
