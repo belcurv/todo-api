@@ -29,3 +29,23 @@ To use Postgres in our app, we need two new modules:
 2. A module for serializing and deserializing JSON data in to hstore format
 
     `$ npm install --save pg-hstore`
+
+** Then we need to use environment variables inside db.js**.  This way, our code automaticall uses SQLite locally ('development') and using Postgres ('production').
+
+```:js
+var Sequelize = require('sequelize');
+var env = process.env.NODE_ENV || 'development;'
+var sequelize;
+
+if (env = 'production') {     // only true if running on Heroku
+    sequelize = new Sequelize(process.env.DATABASE_URL, {
+        'dialect': 'postgress'
+    });
+} else {
+    sequelize = new Sequelize(undefined, undefined, undefined, {
+        'dialect': 'sqlite',
+        'storage': __dirname + '/data/dev-todo-api.sqlite'
+    });
+}
+// more code...
+```
