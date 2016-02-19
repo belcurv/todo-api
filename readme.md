@@ -49,3 +49,5 @@ if (env = 'production') {     // only true if running on Heroku
 }
 // more code...
 ```
+
+Whereas we were previously using _ for a ton of data validation, Sequelize abstracts validation into the model.

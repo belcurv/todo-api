@@ -104,7 +104,7 @@ app.delete('/todos/:id', function (req, res) {
         }
     }, function () {
         res.status(500).send();
-    })
+    });
 
 });
 
@@ -113,37 +113,36 @@ app.delete('/todos/:id', function (req, res) {
 // Updates a todo based on ID
 app.put('/todos/:id', function (req, res) {
     var body = _.pick(req.body, 'description', 'completed'),
-        validAttributes = {},
-        todoId = parseInt(req.params.id, 10),
-        matchedTodo = _.findWhere(todos, {id: todoId});
+        attributes = {},
+        todoId = parseInt(req.params.id, 10);
+    
+    // check if 'completed' property exists
+    if (body.hasOwnProperty('completed')) {
+        attributes.completed = body.completed;
+    }
   
-    if (!matchedTodo) {
-        return res.status(404).send(); // 'return' stops rest of code from running
+    // check if 'description' exists
+    if (body.hasOwnProperty('description')) {
+        // set body.description to be trimmed value
+        attributes.description = body.description;
     }
     
-    // check if 'completed' property exists and is a boolean
-    if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-        validAttributes.completed = body.completed;
-    } else if (body.hasOwnProperty('completed')) {
-        return res.status(400).send();
-    }
-  
-    // check if 'description' exists, is a string, and length > 0
-    if (body.hasOwnProperty('description') &&
-        _.isString(body.description) && 
-        body.description.trim().length > 0) {
-        // set body.description to be trimmed value
-        validAttributes.description = body.description.trim();
-    } else if (body.hasOwnProperty('description')) {
-        return res.status(400).send(); 
-    }
-  
-    // if code gets this far, things went well and we can update the array
-    // we're going to use underscore method: .extend
-    // extend_.extend(destination, *sources)
-    matchedTodo = _.extend(matchedTodo, validAttributes);
-    res.json(todos);
-  
+    db.todo.findById(todoId).then(function (todo) {   // function fires if
+        if (todo) {                                   // findById went well.
+            todo.update(attributes).then(function (todo) {
+                // function fires if todo.update went well
+                res.json(todo.toJSON());
+            }, function (err) {
+                // function fires if todo.update went wrong
+                res.status(400).json(err);            // 400 = 'invalid syntax'
+            });
+        } else {
+            res.status(404).send();
+        }
+    }, function () {                // function fires if findById went wrong
+        res.status(500).send();
+    })
+
 });
 
 // ================== START SERVER ===================
