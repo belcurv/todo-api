@@ -32,7 +32,7 @@ To use Postgres in our app, we need two new modules:
 
 ** Then we need to use environment variables inside db.js**.  This way, our code automaticall uses SQLite locally ('development') and using Postgres ('production').
 
-```:js
+```js
 var Sequelize = require('sequelize');
 var env = process.env.NODE_ENV || 'development;'
 var sequelize;
