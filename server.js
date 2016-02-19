@@ -17,8 +17,8 @@ app.get('/', function (req, res) {
 // ================= GET -> /todos ==================
 // Gets all todos
 app.get('/todos', function (req, res) {
-    var query = req.query;     // returns an object!
-    var where = {};
+    var query = req.query,     // returns an object!
+        where = {};
     
     // if completed exists & true, set where.compelted to true
     if (query.hasOwnProperty('completed') && query.completed === 'true') {
@@ -32,18 +32,18 @@ app.get('/todos', function (req, res) {
         // filter on 'q'
         where.description = {
             $like: '%' + query.q + '%'
-        }
+        };
     }
     
     // finally send the todos back res.json(todos)
     db.todo.findAll({
         where: where
     })
-    .then(function(todos) {
-        res.json(todos);
-    }, function (err) {        // for error, send back 500 like before
-        res.status(500).send();
-    })
+        .then(function (todos) {
+            res.json(todos);
+        }, function (err) {        // for error, send back 500 like before
+            res.status(500).send();
+        });
 
 });
 
@@ -54,16 +54,16 @@ app.get('/todos/:id', function (req, res) {
     var todoId = parseInt(req.params.id, 10); // req.params returns a string; we need number
     
     db.todo.findById(todoId)
-    .then(function (todo) {
-        if (!!todo) {                   // double !! converts object to its 'truthy' boolean
-            res.json(todo.toJSON());
-        } else {
-            res.status(404).send();
-        }
-        
-    }, function (err) {
-        res.status(500).send();
-    });
+        .then(function (todo) {
+            if (!!todo) {                   // double !! converts object to its 'truthy' boolean
+                res.json(todo.toJSON());
+            } else {
+                res.status(404).send();
+            }
+
+        }, function (err) {
+            res.status(500).send();
+        });
     
 });
 
@@ -89,17 +89,24 @@ app.post('/todos', function (req, res) {
 // Deletes a todo based on ID
 app.delete('/todos/:id', function (req, res) {
     var todoId = parseInt(req.params.id, 10);
-    var matchedTodo = _.findWhere(todos, {id: todoId});
-    if (!matchedTodo) {
-        res.status(404).json({"error": "No todo found with that id"});
-    } else {
-        // .without takes: 1 array and removes, argument, argument, etc.
-        todos = _.without(todos, matchedTodo);
-        // reply with all remaining todos
-        res.json(todos);
-    }
-});
+    
+    db.todo.destroy({
+        where: {
+            id: todoId
+        }
+    }).then(function (rowsDeleted) {  // destroy returns number of deleted rows
+        if (rowsDeleted === 0) {
+            res.status(404).json({
+                error: 'No todo with id'
+            });
+        } else {
+            res.status(204).send();   // 204 = "all good, nothing to send back"
+        }
+    }, function () {
+        res.status(500).send();
+    })
 
+});
 
 
 // ================ PUT -> /todos/:id ================
@@ -140,7 +147,7 @@ app.put('/todos/:id', function (req, res) {
 });
 
 // ================== START SERVER ===================
-db.sequelize.sync().then(function() {
+db.sequelize.sync().then(function () {
     app.listen(port, function () {
         console.log('Server listening on port ' + port);
     });

@@ -9,13 +9,13 @@
  * Otherwise we use SQLite
 */
 
-var Sequelize = require('sequelize');
-var env = process.env.NODE_ENV || 'development;'
-var sequelize;
+var Sequelize = require('sequelize'),
+    env = process.env.NODE_ENV || 'development',
+    sequelize;
 
-if (env = 'production') {     // only true if running on Heroku
+if (env === 'production') {     // only true if running on Heroku
     sequelize = new Sequelize(process.env.DATABASE_URL, {
-        'dialect': 'postgress'
+        'dialect': 'postgres'
     });
 } else {
     sequelize = new Sequelize(undefined, undefined, undefined, {
