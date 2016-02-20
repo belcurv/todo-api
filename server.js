@@ -168,29 +168,18 @@ app.post('/users', function (req, res) {
 app.post('/users/login', function (req, res) {
     var body = _.pick(req.body, 'email', 'password');
     
-    if (typeof body.email !== 'string' || typeof body.password !== 'string') {
-        return res.status(400).send();            // ends execution on invalid
-    }
-    
-    db.user.findOne({ where: { email: body.email} }).then(function (user) {
-
-        // if no user OR body.password !== db.user.password, 401
-        if (!user ||
-            !bcrypt.compareSync(body.password, user.get('password_hash')) ) {
-            return res.status(401).send(); // 401 = auth is possible but failed
-        }
-    
+    // authentication via custom sequelize Class Method
+    db.user.authenticate(body).then(function (user) {
         res.json(user.toPublicJSON());
-        
-    }, function (err) {
-        res.status(500).send();
-    })
+    }, function () {      // no user-friendly error messages in authentication!
+        res.status(401).send();
+    });
     
 });
 
 
 // ================== START SERVER ===================
-db.sequelize.sync().then(function () {
+db.sequelize.sync({ force: true }).then(function () {
     app.listen(port, function () {
         console.log('Server listening on port ' + port);
     });
