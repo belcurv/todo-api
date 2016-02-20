@@ -1,6 +1,8 @@
 var express    = require('express'),
     bodyParser = require('body-parser'),
+    morgan     = require('morgan'),
     _          = require('underscore'),   // library of common util functions
+    bcrypt     = require('bcrypt'),
     db         = require('./db.js'),
     app        = express(),
     port       = process.env.PORT || 3000,
@@ -8,6 +10,7 @@ var express    = require('express'),
     todoNextId = 1;            // not secure, we'll do this better later w/db
 
 app.use(bodyParser.json());
+app.use(morgan('dev'));
 
 app.get('/', function (req, res) {
     res.send('Todo API root');
@@ -110,7 +113,7 @@ app.delete('/todos/:id', function (req, res) {
 
 
 // ================ PUT -> /todos/:id ================
-// Updates a todo based on ID
+// Update a todo based on ID
 app.put('/todos/:id', function (req, res) {
     var body = _.pick(req.body, 'description', 'completed'),
         attributes = {},
@@ -146,8 +149,8 @@ app.put('/todos/:id', function (req, res) {
 });
 
 
-// ================+ POST -> /users ================+
-// Adds a user
+// ================= POST -> /users =================
+// Add a user
 app.post('/users', function (req, res) {
     var body = _.pick(req.body, 'email', 'password');
     
@@ -157,6 +160,32 @@ app.post('/users', function (req, res) {
     }, function (err) {
         res.status(400).json(err);        // error
     });
+});
+
+
+// =============== POST -> /users/login ==============
+// User login
+app.post('/users/login', function (req, res) {
+    var body = _.pick(req.body, 'email', 'password');
+    
+    if (typeof body.email !== 'string' || typeof body.password !== 'string') {
+        return res.status(400).send();            // ends execution on invalid
+    }
+    
+    db.user.findOne({ where: { email: body.email} }).then(function (user) {
+
+        // if no user OR body.password !== db.user.password, 401
+        if (!user ||
+            !bcrypt.compareSync(body.password, user.get('password_hash')) ) {
+            return res.status(401).send(); // 401 = auth is possible but failed
+        }
+    
+        res.json(user.toPublicJSON());
+        
+    }, function (err) {
+        res.status(500).send();
+    })
+    
 });
 
 
