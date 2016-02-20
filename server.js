@@ -153,7 +153,7 @@ app.post('/users', function (req, res) {
     
     // call .create on db.todo
     db.user.create(body).then(function (user) {
-        res.json(user.toJSON());          // success
+        res.json(user.toPublicJSON());          // success
     }, function (err) {
         res.status(400).json(err);        // error
     });
