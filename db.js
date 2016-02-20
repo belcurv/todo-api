@@ -2,8 +2,7 @@
  * /db.js
  *
  * Purpose: 
- *   server.js will request the database from db.js,
- *   return that database connection to server.js
+ *   Return database connection to server.js upon request.
  *
  * If Node environment variable is production, we use Postgres.
  * Otherwise we use SQLite
@@ -13,7 +12,9 @@ var Sequelize = require('sequelize'),
     env = process.env.NODE_ENV || 'development',
     sequelize;
 
-if (env === 'production') {     // only true if running on Heroku
+// =========================== CHECK ENV ===========================
+// If running on Heroku, use Postgres, else use SQLite.
+if (env === 'production') {     
     sequelize = new Sequelize(process.env.DATABASE_URL, {
         'dialect': 'postgres'
     });
@@ -29,7 +30,8 @@ var db = {};
 
 // .import method lets us load in sequalize models from separate files
 db.todo = sequelize.import(__dirname + '/models/todo.js');
-db.sequelize = sequelize;            // add our sequelize instance to the object
-db.Sequelize = Sequelize;            // add Sequelize library to the object
+db.user = sequelize.import(__dirname + '/models/user.js');
+db.sequelize = sequelize;           // add our sequelize instance to the object
+db.Sequelize = Sequelize;           // add Sequelize library to the object
 
-module.exports = db;                 // export the whole object
+module.exports = db;                // export the whole object

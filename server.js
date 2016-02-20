@@ -145,6 +145,21 @@ app.put('/todos/:id', function (req, res) {
 
 });
 
+
+// ================+ POST -> /users ================+
+// Adds a user
+app.post('/users', function (req, res) {
+    var body = _.pick(req.body, 'email', 'password');
+    
+    // call .create on db.todo
+    db.user.create(body).then(function (user) {
+        res.json(user.toJSON());          // success
+    }, function (err) {
+        res.status(400).json(err);        // error
+    });
+});
+
+
 // ================== START SERVER ===================
 db.sequelize.sync().then(function () {
     app.listen(port, function () {
