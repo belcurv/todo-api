@@ -170,7 +170,13 @@ app.post('/users/login', function (req, res) {
     
     // authentication via custom sequelize Class Method
     db.user.authenticate(body).then(function (user) {
-        res.json(user.toPublicJSON());
+        var token = user.generateToken('authentication');
+
+        if (token) {
+            res.header('Auth', token).json(user.toPublicJSON());
+        } else {
+            res.status(401).send();
+        }
     }, function () {      // no user-friendly error messages in authentication!
         res.status(401).send();
     });
