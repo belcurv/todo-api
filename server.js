@@ -22,7 +22,9 @@ app.get('/', function (req, res) {
 // Gets all todos
 app.get('/todos', middleware.requireAuthentication, function (req, res) {
     var query = req.query,     // returns an object!
-        where = {};
+        where = {
+            userId: req.user.get('id')
+        };
     
     // if completed exists & true, set where.compelted to true
     if (query.hasOwnProperty('completed') && query.completed === 'true') {
@@ -57,17 +59,21 @@ app.get('/todos', middleware.requireAuthentication, function (req, res) {
 app.get('/todos/:id', middleware.requireAuthentication, function (req, res) {
     var todoId = parseInt(req.params.id, 10); // req.params returns a string; we need number
     
-    db.todo.findById(todoId)
-        .then(function (todo) {
-            if (!!todo) {                   // double !! converts object to its 'truthy' boolean
-                res.json(todo.toJSON());
-            } else {
-                res.status(404).send();
-            }
-
-        }, function (err) {
-            res.status(500).send();
-        });
+    // switch to findOne
+    db.todo.findOne({
+        where: {
+            id: todoId,
+            userId: req.user.get('id')
+        }
+    }).then(function (todo) {
+        if (!!todo) {                   // double !! converts object to its 'truthy' boolean
+            res.json(todo.toJSON());
+        } else {
+            res.status(404).send();
+        }
+    }, function (err) {
+        res.status(500).send();
+    });
     
 });
 
@@ -99,10 +105,11 @@ app.post('/todos', middleware.requireAuthentication, function (req, res) {
 // Deletes a todo based on ID
 app.delete('/todos/:id', middleware.requireAuthentication, function (req, res) {
     var todoId = parseInt(req.params.id, 10);
-    
+
     db.todo.destroy({
         where: {
-            id: todoId
+            id: todoId,
+            userId: req.user.get('id')
         }
     }).then(function (rowsDeleted) {  // destroy returns number of deleted rows
         if (rowsDeleted === 0) {
@@ -137,7 +144,13 @@ app.put('/todos/:id', middleware.requireAuthentication, function (req, res) {
         attributes.description = body.description;
     }
     
-    db.todo.findById(todoId).then(function (todo) {   // function fires if
+    // change findOne with where clause where id = todoId && userId = req.user.get('id')
+    db.todo.findOne({
+        where: {
+            id: todoId,
+            userId: req.user.get('id')
+        }
+    }).then(function (todo) {   // function fires if
         if (todo) {                                   // findById went well.
             todo.update(attributes).then(function (todo) {
                 // function fires if todo.update went well
