@@ -79,11 +79,17 @@ app.post('/todos', middleware.requireAuthentication, function (req, res) {
     
     // call .create on db.todo
     db.todo.create(body).then(function (todo) {
-        // success
-        res.json(todo.toJSON());
+        // create association, update todo item, return new todo item to API call.
+        // middleware.js sets a user on the request object: req.user = user
+        // so we have access to that here.
+        req.user.addTodo(todo).then(function () {
+            // .reload because we've added an association since todo has created
+            return todo.reload();
+        }).then(function (todo) {  // receives updated version of the todo
+            res.json(todo.toJSON());
+        });
     }, function (err) {
-        // error
-        res.status(400).json(err);
+        res.status(400).json(err);         // error
     });
 
 });

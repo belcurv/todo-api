@@ -20,50 +20,45 @@ var Todo = sequelize.define('todo', {
     }
 });
 
+var User = sequelize.define('user', {
+    email: {
+        type: Sequelize.STRING
+    }
+});
+
+// One to many association.
+// We call one method on each of our models.
+// These methods tell sequelize how to set up our db with foreign keys.
+Todo.belongsTo(User);    // takes the model that the todo belongs to, in this case a user.
+User.hasMany(Todo);      // takes the model that the user has.
+
 sequelize.sync({
     // force: true
 }).then(function () {
     console.log('Everything is synced');
     
-    // CHALLENGE
-    // fetch todo item by id, then print to screen toJSON
-    // else print Todo not found
+    User.findById(1).then(function (user) {
+        user.getTodos({
+            where: {
+                completed: false
+            }
+        }).then(function (todos) { // sequelize makes this method magicically!
+            todos.forEach(function(todo) {
+                console.log(todo.toJSON());
+            });
+        });
+    });
     
-    Todo.findById(1)
-    .then(function (todo) {
-        if (todo) {
-            console.log(todo.toJSON());            
-        } else {
-            console.log('No todo found');
-        }
-    })
-    
-    //  PRIOR COURSEWORK
-    //    Todo.create({                       // add an item
-    //        description: 'Take out trash'
-    //    }).then(function(todo) {
-    //        return Todo.create({            // another item
-    //            description: 'Clean office'
+    //    User.create({
+    //        email: 'andrew@example.com'
+    //    }).then(function () {
+    //        return Todo.create({
+    //            description: "Walk the dog"
+    //        })
+    //    }).then(function (todo) {
+    //        User.findById(1).then(function (user) {
+    //            user.addTodo(todo);      // sequelize makes this method magicically!
     //        });
-    //    }).then(function () {               // do this on success
-    //        // return Todo.findById(1)      // finds a single todo by ID
-    //        return Todo.findAll({           // finds all todos based on criteria where object
-    //            where: {                    //   and returns an array of items
-    //                description: {
-    //                    $like: '%Office%'    // $like is a sequelize function that lets us look for
-    //                                        //   a word inside an attribute. $like isn't case sensitive.
-    //                }
-    //            }
-    //        });
-    //    }).then(function (todos) {
-    //        if (todos) {
-    //            todos.forEach(function (todo) {   // iterate over the returned array
-    //                console.log(todo.toJSON());   // log that stuff
-    //            });
-    //        } else {
-    //            console.log('No todo found');
-    //        }
-    //    }).catch(function (err) {           // do this on error
-    //        console.log(err);
     //    });
+
 });

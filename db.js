@@ -6,6 +6,8 @@
  *
  * If Node environment variable is production, we use Postgres.
  * Otherwise we use SQLite
+ *
+ * Call belonsTo and hasMany sequelize methods
 */
 
 var Sequelize = require('sequelize'),
@@ -33,5 +35,8 @@ db.todo = sequelize.import(__dirname + '/models/todo.js');
 db.user = sequelize.import(__dirname + '/models/user.js');
 db.sequelize = sequelize;           // add our sequelize instance to the object
 db.Sequelize = Sequelize;           // add Sequelize library to the object
+
+db.todo.belongsTo(db.user);         // sequelize association method
+db.user.hasMany(db.todo);           // sequelize association method
 
 module.exports = db;                // export the whole object
