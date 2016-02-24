@@ -3,7 +3,7 @@ var bcrypt   = require('bcrypt'),
     cryptojs = require('crypto-js'),
     jwt      = require('jsonwebtoken');
 
-module.exports = function(sequelize, DataTypes) {
+module.exports = function (sequelize, DataTypes) {
     var user = sequelize.define('user', {
         email: {
             type: DataTypes.STRING,
@@ -41,7 +41,7 @@ module.exports = function(sequelize, DataTypes) {
                 // to avoid dupe emails because of capitalization.
                 if (typeof user.email === 'string') {
                     user.email = user.email.toLowerCase();
-                } 
+                }
             }
         },
         classMethods: {
@@ -56,7 +56,7 @@ module.exports = function(sequelize, DataTypes) {
                             email: body.email
                         }
                     }).then(function (user) {
-                        if (!user || !bcrypt.compareSync(body.password, user.get('password_hash')) ) {
+                        if (!user || !bcrypt.compareSync(body.password, user.get('password_hash'))) {
                             return reject();
                         }
                         
@@ -66,6 +66,32 @@ module.exports = function(sequelize, DataTypes) {
                     }, function (err) {
                         reject();
                     });
+                });
+            },
+            findByToken: function (token) {
+                return new Promise(function (resolve, reject) {
+                    // decode token and decrypt our data
+                    try {
+                        // .verify method confirms token validity and fidelity.
+                        // It takes the token and the jwt password from generateToken.
+                        var decodedJWT = jwt.verify(token, 'qwerty098'),
+                            bytes = cryptojs.AES.decrypt(decodedJWT.token, 'abc123!@#!'),
+                            tokenData = JSON.parse(bytes.toString(cryptojs.enc.Utf8));
+                        
+                        user.findById(tokenData.id).then(function (user) {
+                            if (user) {
+                                resolve(user);
+                            } else {
+                                reject();  // reject if ID not found in database
+                            }
+                        }, function (err) {
+                            reject();  // reject if findById fails b/c maybe no db connection
+                        });
+                        
+                        
+                    } catch (err) {
+                        reject();      // reject if token isn't a valid format
+                    }
                 });
             }
         },

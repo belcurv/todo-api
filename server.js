@@ -1,9 +1,10 @@
 var express    = require('express'),
     bodyParser = require('body-parser'),
     morgan     = require('morgan'),
-    _          = require('underscore'),   // library of common util functions
-    bcrypt     = require('bcrypt'),
+    _          = require('underscore'),
     db         = require('./db.js'),
+    bcrypt     = require('bcrypt'),
+    middleware = require('./middleware.js')(db),  // get middleware, pass in database
     app        = express(),
     port       = process.env.PORT || 3000,
     todos      = [],
@@ -19,7 +20,7 @@ app.get('/', function (req, res) {
 
 // ================= GET -> /todos ==================
 // Gets all todos
-app.get('/todos', function (req, res) {
+app.get('/todos', middleware.requireAuthentication, function (req, res) {
     var query = req.query,     // returns an object!
         where = {};
     
@@ -53,7 +54,7 @@ app.get('/todos', function (req, res) {
 
 // ================ GET -> /todos/:id ================
 // Gets a single todo based on ID
-app.get('/todos/:id', function (req, res) {
+app.get('/todos/:id', middleware.requireAuthentication, function (req, res) {
     var todoId = parseInt(req.params.id, 10); // req.params returns a string; we need number
     
     db.todo.findById(todoId)
@@ -73,7 +74,7 @@ app.get('/todos/:id', function (req, res) {
 
 // ================= POST -> /todos =================
 // Adds a todo
-app.post('/todos', function (req, res) {
+app.post('/todos', middleware.requireAuthentication, function (req, res) {
     var body = _.pick(req.body, 'description', 'completed');
     
     // call .create on db.todo
@@ -90,7 +91,7 @@ app.post('/todos', function (req, res) {
 
 // =============== DELETE -> /todos/:id ===============
 // Deletes a todo based on ID
-app.delete('/todos/:id', function (req, res) {
+app.delete('/todos/:id', middleware.requireAuthentication, function (req, res) {
     var todoId = parseInt(req.params.id, 10);
     
     db.todo.destroy({
@@ -114,7 +115,7 @@ app.delete('/todos/:id', function (req, res) {
 
 // ================ PUT -> /todos/:id ================
 // Update a todo based on ID
-app.put('/todos/:id', function (req, res) {
+app.put('/todos/:id', middleware.requireAuthentication, function (req, res) {
     var body = _.pick(req.body, 'description', 'completed'),
         attributes = {},
         todoId = parseInt(req.params.id, 10);
@@ -144,7 +145,7 @@ app.put('/todos/:id', function (req, res) {
         }
     }, function () {                // function fires if findById went wrong
         res.status(500).send();
-    })
+    });
 
 });
 
@@ -169,10 +170,12 @@ app.post('/users/login', function (req, res) {
     var body = _.pick(req.body, 'email', 'password');
     
     // authentication via custom sequelize Class Method
+    // on success, returns a token in header
     db.user.authenticate(body).then(function (user) {
         var token = user.generateToken('authentication');
 
         if (token) {
+            // Create header property 'Auth', set token & return public info
             res.header('Auth', token).json(user.toPublicJSON());
         } else {
             res.status(401).send();
