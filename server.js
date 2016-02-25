@@ -186,23 +186,36 @@ app.post('/users', function (req, res) {
 // =============== POST -> /users/login ==============
 // User login
 app.post('/users/login', function (req, res) {
-    var body = _.pick(req.body, 'email', 'password');
+    var body = _.pick(req.body, 'email', 'password'),
+        userInstance;
     
     // authentication via custom sequelize Class Method
     // on success, returns a token in header
     db.user.authenticate(body).then(function (user) {
         var token = user.generateToken('authentication');
+        userInstance = user;
+        
+        return db.token.create({
+            token: token
+        });
 
-        if (token) {
-            // Create header property 'Auth', set token & return public info
-            res.header('Auth', token).json(user.toPublicJSON());
-        } else {
-            res.status(401).send();
-        }
-    }, function () {      // no user-friendly error messages in authentication!
+    }).then(function (tokenInstance) {
+        res.header('Auth', tokenInstance.get('token')).json(userInstance.toPublicJSON());
+    }).catch(function () {      // no user-friendly error messages in authentication!
         res.status(401).send();
     });
     
+});
+
+
+// ============== DELETE -> /users/login =============
+// Delete login instance from database
+app.delete('/users/login', middleware.requireAuthentication, function (req, res) {
+    req.token.destroy().then(function () {
+        res.status(204).send();
+    }).catch(function () {
+        res.status(500).send();
+    })
 });
 
 
